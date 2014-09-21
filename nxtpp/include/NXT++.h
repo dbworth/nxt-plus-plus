@@ -1,6 +1,6 @@
 // File: NXT++.h
 //
-// Copyright (c) 2007 by XXX
+// Copyright (c) 2007-2013 Authors listed below
 // -------------------------------------------------------------------------
 // DESCRIPTION
 // NXT++.h is a header file containing an interface for programming Lego NXT 
@@ -9,9 +9,36 @@
 // HISTORY
 // Date         By who         Description
 // -------------------------------------------------------------------------
+//       2007   cmwslw
 // 04/26/2007   maddock     OS specific includes, comment headers
 // 05/16/2007   phyizal     Removed fantom function call 
-// May 2012     David Butterworth   commented additions
+// May 2012     David Butterworth   OpenNXTDevice() by device name or MAC address,
+//                                  supports multiple USB or Bluetooth devices.
+//                                  SetName() to set name of NXT device.
+// 04/01/2012   artem       Added Lego color sensor support 
+
+
+		void SetColorOff(Comm::NXTComm* comm, int port);
+
+        void SetColor(Comm::NXTComm* comm, int port, char p);
+
+GoTo2()
+
+
+		/*! Sets a sensor multiplexer (SMUX) in a specified port,
+                  ! \param port can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
+		void SetSMUX(Comm::NXTComm* comm, int port);
+		//! Retrieves the value of a sensor connected to specified subport of sensor multiplexer,
+		/*\param port The port in which the sensor multiplexer is connected, can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.
+		\param subport - is the number of sensor multiplexer subport, can by 1, 2, 3 or 4.
+		\param SensorType is the type of sensor, can be the number, 1 - for digital sensor, 2 - for analog sensor,
+		 This function return the sensor current values in raw mode,*/
+		int GetSMUXvalue(Comm::NXTComm* comm, int port,  int subport,  int SensorType);
+
+
+
+
+
 
 #include "comm.h"
 
@@ -60,9 +87,6 @@ namespace NXT
 	bool OpenBT(Comm::NXTComm* comm);
 	bool OpenBT(Comm::NXTComm* comm, char * name);
 
-	// New in v0.7
-	// David Butterworth, May 2012
-	//
 	// Open connection to NXT.
 	// Using Device Name or MAC Address,
 	// supports multiple USB or Bluetooth devices.
@@ -153,6 +177,8 @@ namespace NXT
 		count (in degrees) that you want the motor to turn to. \param brake Whether or not you want the motor
 		to brake or float when it is done turning.*/
 		void GoTo(Comm::NXTComm* comm, int port, int power, int tacho, bool brake);
+                // artem?
+                void GoTo2(Comm::NXTComm* comm, int port, int power, int tacho, bool brake);
 	}
 	
 	//! Contains all the functions that have to do with a sensor.
@@ -174,6 +200,42 @@ namespace NXT
 		/*! \param port The port that you wish to set as a sonar sensor. Can be the numbers 0-3 or IN_1,
 		IN_2, IN_3, or IN_4.*/;
 		void SetSonar(Comm::NXTComm* comm, int port);
+
+
+     //! Sets a sensor in a specified port to a color sensor in the chosen mode.
+        /*! \param port The port that you wish to set as a color sensor. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
+        /*\param p is the parameter, which let you choose different mode of color sensor, there are alternative modes: 
+		'r' - set to read red color intensity, 'g' - set to read green color intensity, 
+		'b' - set to read blue color intensity and 'f' - set to read full color number, where sensor can return numbers: 
+		1=black, 2=blue, 3=green, 4=yellow, 5=red, 6=white*/;
+        void SetColor(Comm::NXTComm* comm, int port, char p);
+
+
+
+
+
+		/*! Sets a sensor multiplexer (SMUX) in a specified port,
+        ! \param port can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
+		void SetSMUX(Comm::NXTComm* comm, int port);
+		/*! Sets a touch sensor multiplexer (TMUX) in a specified port,
+        ! \param port can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
+		void SetTMUX(Comm::NXTComm* comm, int port);
+		//! Retrieves the value of a sensor connected to specified subport of sensor multiplexer,
+		/*\param port The port in which the sensor multiplexer is connected, can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.
+		\param subport - is the number of sensor multiplexer subport, can by 1, 2, 3 or 4.
+		\param SensorType is the type of sensor, can be the number, 1 - for digital sensor, 2 - for analog sensor,
+		 This function return the sensor current values in raw mode,*/
+		int GetSMUXvalue(Comm::NXTComm* comm, int port,  int subport,  int SensorType);
+		/*! Retrieves the value of a touch sensor connected to specified subport of touch sensor multiplexer, 
+		return 1-pressed touch sensor, return 0-sensor not pressed, or missing,
+		\param port The port in which the sensor multiplexer is connected, can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.
+		\param subport - is the number of touch sensor multiplexer subport, can by 1, 2, 3 or 4*/
+		int GetTMUXvalue(Comm::NXTComm* comm, int port, int subport);
+
+
+
+
+
 		//! Sets a sensor in a specified port to a Mind Sensors Compass sensor.
 		/*! \param port The port that you wish to set as a compass sensor. Can be the numbers 0-3 or IN_1, IN_2, IN_3,
 		or IN_4. */
@@ -190,6 +252,9 @@ namespace NXT
 		/*! \param port The port that you wish perform this operation on. Can be the numbers 0-3 or IN_1, IN_2,
 		IN_3, or IN_4. \param type The SensorType that you wish to set the sensor to.*/
 		void Set(Comm::NXTComm* comm, int port, SensorType type);
+
+
+
 		//! Retrieves the value of a sensor.
 		/*! Does not work with the Sonar sensor. \param port The port that you wish to retrieve it's sensor's value from. Can be the numbers 0-3 or
 		IN_1, IN_2, IN_3, or IN_4. \return The sensor's current value.*/
@@ -216,13 +281,26 @@ namespace NXT
 		confused with GetSonarValue(). \param port The port that you wish to get the status of. Can be the numbers
 		0-3 or IN_1, IN_2, IN_3, or IN_4. \return The status of the specified port.*/
 		int LSGetStatus(Comm::NXTComm* comm, int port);
+
 		//! Retrieves the value for sonar sensors.
 		/*! \param port The port that contains the sonar sensor. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.
 		\return The sonar sensor's current value in centimeters.*/
 		int GetSonarValue(Comm::NXTComm* comm, int port);
+
+
+
 		//! Tells the sonar sensor to stop sending pulses.
 		/*! \param port The port that contains the sonar sensor. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
 		void SetSonarOff(Comm::NXTComm* comm, int port);
+
+
+
+        //! Tells the NXT brick to disable color sensor
+        /*! \param port The port that contains the color sensor. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
+		void SetColorOff(Comm::NXTComm* comm, int port);
+
+
+
 		//! Tells the sonar sensor to only send a pulse when you ask it what it's value is.
 		/*! \param port The port that contains the sonar sensor. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4.*/
 		void SetSonarSingleShot(Comm::NXTComm* comm, int port);
@@ -234,6 +312,7 @@ namespace NXT
 		IN_1, IN_2, IN_3, or IN_4. \param interval The interval at which the sonar sensor should send a pulse in
 		miliseconds.*/
 		void SetSonarContinuousInterval(Comm::NXTComm* comm, int port, int interval);
+
 		//! Writes the command to the I2C sensor
 		/*! See the GetDistNxValue() source for an example. \param port The port where the I2C sensor you wish to write
 		to is. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4. \param command The command you want to send, starting
@@ -244,6 +323,15 @@ namespace NXT
 		/*! Always returns an array of length 19. See GetDisNxValue for an example. \param port port The port where the
 		I2C sensor you wish to read from is. Can be the numbers 0-3 or IN_1, IN_2, IN_3, or IN_4. */
 		ViUInt8* readI2C(Comm::NXTComm* comm, int port);
+
+
+
+
+
+
+
+
+
 	}
 
     

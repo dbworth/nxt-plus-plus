@@ -215,6 +215,53 @@ void NXT::Motor::GoTo(Comm::NXTComm* comm, int port, int power, int tacho, bool 
 	}
 }
 
+void NXT::Motor::GoTo2(Comm::NXTComm* comm, int port, int power, int tacho, bool brake)
+{
+	int cte;
+	int actual_pos;
+	double alpha=0.05;
+	int prec=4;
+
+	for(int cc=1;cc>0;cc++)
+	{// for goto2
+   		actual_pos=GetRotationCount(comm, port);
+   		//std::cout<<"\ncc = "<<cc;
+   		if(tacho>=0 && actual_pos>=0)
+     		{
+     			cte=abs(tacho-actual_pos);
+     		}
+   		if(tacho<=0 && actual_pos<=0)
+     		{
+     			cte=abs(abs(tacho)-abs(actual_pos));
+     		}
+    		if(tacho<=0 && actual_pos>=0)
+     		{
+     			cte=abs(tacho)+actual_pos;
+     		}
+    		if(tacho>=0 && actual_pos<=0)
+     		{
+     			cte=tacho+abs(actual_pos);
+     		}
+
+		cte=(int)cte;
+
+		if(GetRotationCount(comm, port) > tacho)
+	 	{
+	  		SetReverse(comm, port, power+(alpha*cte));
+	 	}
+		if(GetRotationCount(comm, port) < tacho)
+	 	{
+	  		SetForward(comm, port, power+(alpha*cte));
+	 	}
+		if(GetRotationCount(comm, port) < tacho+prec && GetRotationCount(comm, port) > tacho-prec)
+	 	{
+	   		Stop(comm, port, brake);
+	   		break;
+	 	}
+		//std::cout<<"\ncte="<<cte*alpha;
+    	}//for goto2
+}
+
 void NXT::Sensor::SetTouch(Comm::NXTComm* comm, int port)
 {
 	ViUInt8 directCommandBuffer[] = { 0x05, port, 0x01, 0x20 };
@@ -245,6 +292,68 @@ void NXT::Sensor::SetSonar(Comm::NXTComm* comm, int port)
 {
 	ViUInt8 directCommandBuffer[] = { 0x05, port, 0x0B, 0x00 };
 	comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+}
+
+void NXT::Sensor::SetTMUX(Comm::NXTComm* comm, int port)
+{
+	ViUInt8 directCommandBuffer[] = { 0x05, port, 0x07, 0x80 };
+	comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+}
+
+void NXT::Sensor::SetSMUX(Comm::NXTComm* comm, int port)
+{
+	ViUInt8 directCommandBuffer0[] = { 0x05, port, 0x0B, 0x80 };
+	comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer0 ), sizeof( directCommandBuffer0 ), NULL, 0);
+	Wait(50);
+  
+	ViUInt8 directCommandBuffer[] = {0x0F, port, 0x03, 0x00, 0x10, 0x20, 0x00};
+	ViUInt8 directCommandBuffer2[] = {0x0F, port, 0x03, 0x00, 0x10, 0x20, 0x01};
+	ViUInt8 directCommandBuffer3[] = {0x0F, port, 0x03, 0x00, 0x10, 0x20, 0x02};
+
+	for(int i=0;i<2;i++)
+	{
+		comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+		Wait(50);
+		comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer2 ), sizeof( directCommandBuffer2 ), NULL, 0);
+		Wait(500);
+		comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer3 ), sizeof( directCommandBuffer3 ), NULL, 0);
+		Wait(50);
+	}
+}
+
+void NXT::Sensor::SetColor(Comm::NXTComm* comm, int port, char p)
+{
+	if(p=='F' || p=='f')
+	{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x0D, 0x00 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+	}
+	if(p=='R' || p=='r')
+	{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x0E, 0x00 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+	}
+	if(p=='G' || p=='g')
+	{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x0F, 0x00 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+	}
+	if(p=='B' || p=='b')
+	{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x10, 0x00 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);	
+	}
+	if(p=='N' || p=='n')
+	{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x11, 0x00 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+	}
+	if(p=='E' || p=='e')
+	{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x12, 0x80 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+	}
+	Wait(300);
 }
 
 void NXT::Sensor::SetCmpsNx(Comm::NXTComm* comm, int port)
@@ -475,6 +584,12 @@ void NXT::Sensor::SetSonarOff(Comm::NXTComm* comm, int port)
 		reinterpret_cast< ViByte* >( responseBuffer ), sizeof( responseBuffer ));
 }
 
+void NXT::Sensor::SetColorOff(Comm::NXTComm* comm, int port)
+{
+	 ViUInt8 directCommandBuffer[] = { 0x05, port, 0x12, 0x00 };
+	 comm->SendDirectCommand( false, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ), NULL, 0);
+}
+
 void NXT::Sensor::SetSonarSingleShot(Comm::NXTComm* comm, int port)
 {
 	ViUInt8 directCommandBuffer[] = {0x0F, port, 0x03, 0x00, 0x02, 0x41, 0x01};
@@ -505,7 +620,7 @@ void NXT::Sensor::SetSonarContinuousInterval(Comm::NXTComm* comm, int port, int 
 void NXT::Sensor::writeI2C(Comm::NXTComm* comm, int port, ViUInt8 command[], int replySz, int tx_length)
 {
 	int i=0;
-    ViUInt8 commandBuffer[24];
+	ViUInt8 commandBuffer[24];
 	ViUInt8 response[] = { 1,1 };
         
     while(i < tx_length){
@@ -532,6 +647,111 @@ ViUInt8* NXT::Sensor::readI2C(Comm::NXTComm* comm, int port)
 		reinterpret_cast< ViByte* >( response ), sizeof( response ));
 
 	return response;
+}
+
+int NXT::Sensor::GetSMUXvalue(Comm::NXTComm* comm, int port, int subport, int SensorType)
+{
+	int bytesRead = 0;
+
+	do {
+		ViUInt8 subportB;
+
+		if(SensorType==1)
+		{
+			if(subport==1)
+			{
+ 				subportB=0x40;
+			}
+			if(subport==2)
+			{
+				subportB=0x50;
+			}
+			if(subport==3)
+			{
+				subportB=0x60;
+			}
+			if(subport==4)
+			{
+				subportB=0x70;
+			}
+		}
+
+		if(SensorType==2)
+		{
+			if(subport==1)
+			{
+				subportB=0x36;
+			}
+			if(subport==2)
+			{
+				subportB=0x38;
+			}
+			if(subport==3)
+			{
+				subportB=0x3A;
+			}
+			if(subport==4)
+			{
+				subportB=0x3C;
+			}
+		}
+
+  		ViUInt8 directCommandBuffer4[] = {0x0F, port, 0x02, 0x01, 0x10, subportB};
+  		ViUInt8 responseBuffer4[] = {1, 1};
+  		comm->SendDirectCommand( true, reinterpret_cast< ViByte* >( directCommandBuffer4 ), sizeof( directCommandBuffer4 ),
+  		  		         reinterpret_cast< ViByte* >( responseBuffer4 ), sizeof( responseBuffer4 ) );
+  		Wait(10);
+  		bytesRead = LSGetStatus(comm, port);
+
+	} while (bytesRead < 1);
+
+	ViUInt8 directCommandBuffer5[] = {0x10, port};
+	ViUInt8 responseBuffer5[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+	comm->SendDirectCommand( true, reinterpret_cast< ViByte* >( directCommandBuffer5 ), sizeof( directCommandBuffer5 ),
+				 reinterpret_cast< ViByte* >( responseBuffer5 ), sizeof( responseBuffer5 ) );
+	return (int)responseBuffer5[3];
+}
+
+int NXT::Sensor::GetTMUXvalue(Comm::NXTComm* comm, int port,int subport)
+{
+	int state=0;
+	int odczyt;
+	ViUInt8 directCommandBuffer[] = { 0x07, port };
+	ViUInt8 responseBuffer[] = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
+
+	comm->SendDirectCommand( true, reinterpret_cast< ViByte* >( directCommandBuffer ), sizeof( directCommandBuffer ),
+				 reinterpret_cast< ViByte* >( responseBuffer ), sizeof( responseBuffer ) );	
+	odczyt = responseBuffer[12]*256+responseBuffer[11];
+
+	if(subport==1)
+	{
+		if(odczyt==1 || odczyt==2 || odczyt==8 || odczyt==13 || odczyt==14 || odczyt==23 || odczyt==24 || odczyt==18 || odczyt==19 || odczyt==27 || odczyt==35)
+		{
+			state=1;
+		}
+	}
+	if(subport==2)
+	{
+		if(odczyt==4 || odczyt==5 || odczyt==8 || odczyt==16 || odczyt==25 || odczyt==26 || odczyt==18 || odczyt==19 || odczyt==27 || odczyt==33 || odczyt==35)
+		{
+			state=1;
+		}
+	}
+	if(subport==3)
+	{
+		if(odczyt==11 || odczyt==13 || odczyt==14 || odczyt==16 || odczyt==30 || odczyt==18 || odczyt==19 || odczyt==33 || odczyt==35)
+		{
+			state=1;
+		}
+	}
+	if(subport==4)
+	{
+		if(odczyt==21 || odczyt==23 || odczyt==24 || odczyt==25 || odczyt==26 || odczyt==30 || odczyt==27 || odczyt==33 || odczyt==35)
+		{
+			state=1;
+		}
+	}
+	return state;
 }
 
 //! Retrieves a specific NXT file pointer by name.
